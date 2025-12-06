@@ -9,7 +9,6 @@
 - [ ] GUI main window layout (PyQt5)
 - [ ] Video player widget
 - [ ] Manual line drawing tools
-- [ ] Export annotated frames and videos
 
 ## Completed
 - [x] Initial project setup and structure
@@ -46,8 +45,18 @@
   - Text annotations with background boxes
   - 35 tests with 86-100% module coverage
   - Comprehensive demo with 6 scenarios
+- [x] Export annotated frames and videos
+  - FrameExporter for single image export (JPEG, PNG, BMP, TIFF)
+  - VideoExporter with context manager and progress tracking
+  - BatchExporter for frame sequences with filename templates
+  - ProgressTracker with ETA calculation and callbacks
+  - Support for multiple codecs (MJPEG, XVID, MP4V)
+  - Quality control for JPEG (0-100) and PNG (0-9)
+  - Video frame extraction and batch export
+  - 114 tests with 86-98% module coverage
+  - Demo script with 5 comprehensive examples
 - [x] Comprehensive test suite
-  - 201 tests total with 95% coverage
+  - 315 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)
 - [x] Project documentation
   - README.md with usage examples
