@@ -4,7 +4,6 @@
 (none)
 
 ## Backlog
-- [ ] Manual line drawing tools
 - [ ] Batch video processing
 - [ ] Side-by-side comparison view
 
@@ -90,6 +89,19 @@
   - Video export with overlays and progress tracking (Export Video to AVI/MP4)
   - Temporal smoothing for club and pose tracking
   - Dynamic overlay toggling with instant refresh
+- [x] Manual drawing tools
+  - Complete drawing module with Point2D, Line, Angle, Circle, Arc, TextAnnotation
+  - Interactive tools: LineTool, AngleTool, CircleTool, TextTool with state machines
+  - DrawingRenderer with measurement labels and selection highlighting
+  - DrawingManager with unlimited undo/redo stack
+  - DrawingStorage for JSON persistence (save/load)
+  - DrawingCanvas widget for interactive mouse-based drawing
+  - DrawingToolbar with F1 styling (tool buttons, color picker, thickness slider)
+  - Full MainWindow integration with Draw menu
+  - Keyboard shortcuts: Ctrl+D (toggle drawing), Ctrl+Z/Y (undo/redo), Ctrl+Shift+S/O (save/load)
+  - Drawings render on exported frames and videos
+  - Shape selection and deletion support
+  - Per-frame drawing storage
 - [x] Comprehensive test suite
   - 510 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)

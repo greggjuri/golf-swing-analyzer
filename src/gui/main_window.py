@@ -64,11 +64,19 @@ class MainWindow(QMainWindow):
         self.plane_results = None  # Swing plane analysis results
         self.key_positions = {}  # position_name -> frame_num
 
+        # Drawing components
+        self.drawing_manager = None
+        self.drawing_renderer = None
+        self.drawing_canvas = None
+        self.drawing_toolbar = None
+        self.drawing_enabled = False
+
         # Create UI components
         self._create_menu_bar()
         self._create_tool_bar()
         self._create_central_widget()
         self._create_status_bar()
+        self._create_drawing_components()
 
         # Connect signals
         self._connect_signals()
@@ -148,6 +156,33 @@ class MainWindow(QMainWindow):
         detect_positions_action.triggered.connect(self._detect_key_positions)
         analysis_menu.addAction(detect_positions_action)
 
+        # === DRAW MENU ===
+        draw_menu = menubar.addMenu("&Draw")
+
+        # Enable Drawing Mode
+        self.enable_drawing_action = QAction("Enable &Drawing Mode", self)
+        self.enable_drawing_action.setCheckable(True)
+        self.enable_drawing_action.setShortcut(QKeySequence("Ctrl+D"))
+        self.enable_drawing_action.setStatusTip("Enable drawing mode (Ctrl+D)")
+        self.enable_drawing_action.triggered.connect(self._toggle_drawing_mode)
+        draw_menu.addAction(self.enable_drawing_action)
+
+        draw_menu.addSeparator()
+
+        # Save Drawings
+        save_drawings_action = QAction("&Save Drawings...", self)
+        save_drawings_action.setShortcut(QKeySequence("Ctrl+Shift+S"))
+        save_drawings_action.setStatusTip("Save drawings to file")
+        save_drawings_action.triggered.connect(self._save_drawings)
+        draw_menu.addAction(save_drawings_action)
+
+        # Load Drawings
+        load_drawings_action = QAction("&Load Drawings...", self)
+        load_drawings_action.setShortcut(QKeySequence("Ctrl+Shift+O"))
+        load_drawings_action.setStatusTip("Load drawings from file")
+        load_drawings_action.triggered.connect(self._load_drawings)
+        draw_menu.addAction(load_drawings_action)
+
         # === HELP MENU ===
         help_menu = menubar.addMenu("&Help")
 
@@ -217,6 +252,32 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready")
 
+    def _create_drawing_components(self):
+        """Create drawing components (manager, renderer, toolbar, canvas)."""
+        from ..drawing import (
+            DrawingManager, DrawingRenderer,
+            DrawingToolbar, DrawingCanvas,
+            LineTool, AngleTool, CircleTool, TextTool
+        )
+
+        # Create drawing manager
+        self.drawing_manager = DrawingManager()
+
+        # Create drawing renderer
+        self.drawing_renderer = DrawingRenderer()
+
+        # Create drawing toolbar (hidden by default)
+        self.drawing_toolbar = DrawingToolbar()
+        self.drawing_toolbar.setVisible(False)
+
+        # Add toolbar to main window (below main toolbar)
+        self.addToolBar(Qt.TopToolBarArea, self.drawing_toolbar)
+
+        # Create drawing canvas (overlays on video player)
+        # Will be positioned in video player widget
+
+        logger.debug("Drawing components created")
+
     def _connect_signals(self):
         """Connect widget signals to slots."""
         # Video player signals
@@ -233,6 +294,15 @@ class MainWindow(QMainWindow):
 
         # Analysis panel signals
         self.analysis_panel.overlay_toggled.connect(self._on_overlay_toggled)
+
+        # Drawing toolbar signals
+        if self.drawing_toolbar:
+            self.drawing_toolbar.tool_selected.connect(self._on_tool_selected)
+            self.drawing_toolbar.color_changed.connect(self._on_drawing_color_changed)
+            self.drawing_toolbar.thickness_changed.connect(self._on_drawing_thickness_changed)
+            self.drawing_toolbar.undo_requested.connect(self._on_drawing_undo)
+            self.drawing_toolbar.redo_requested.connect(self._on_drawing_redo)
+            self.drawing_toolbar.clear_requested.connect(self._on_drawing_clear)
 
     def open_video(self):
         """Open video file dialog and load video."""
@@ -351,6 +421,12 @@ class MainWindow(QMainWindow):
             # Apply overlays if visualization engine is available
             if self.viz_engine and frame is not None:
                 frame = self._apply_overlays(frame, frame_number)
+
+            # Apply manual drawings if available
+            if self.drawing_renderer and self.drawing_manager and frame is not None:
+                shapes = self.drawing_manager.get_shapes_for_frame(frame_number)
+                if shapes:
+                    frame = self.drawing_renderer.render(frame, shapes)
 
             return frame
 
@@ -915,6 +991,173 @@ class MainWindow(QMainWindow):
                     f"Failed to export frame:\n{str(e)}"
                 )
                 self.status_bar.showMessage("Export failed")
+
+    def _toggle_drawing_mode(self, checked: bool):
+        """Toggle drawing mode on/off.
+
+        Args:
+            checked: Whether drawing mode is enabled
+        """
+        self.drawing_enabled = checked
+        self.drawing_toolbar.setVisible(checked)
+
+        if checked:
+            self.status_bar.showMessage("Drawing mode enabled", 2000)
+            logger.info("Drawing mode enabled")
+        else:
+            self.status_bar.showMessage("Drawing mode disabled", 2000)
+            logger.info("Drawing mode disabled")
+
+    def _on_tool_selected(self, tool_name: str):
+        """Handle tool selection from toolbar.
+
+        Args:
+            tool_name: Name of selected tool
+        """
+        from ..drawing import LineTool, AngleTool, CircleTool, TextTool
+
+        # Get current color and thickness from toolbar
+        color = self.drawing_toolbar.get_current_color()
+        thickness = self.drawing_toolbar.get_current_thickness()
+
+        # Create appropriate tool
+        if tool_name == "select":
+            tool = None
+        elif tool_name == "line":
+            tool = LineTool(color=color, thickness=thickness)
+        elif tool_name == "angle":
+            tool = AngleTool(color=color, thickness=thickness)
+        elif tool_name == "circle":
+            tool = CircleTool(color=color, thickness=thickness)
+        elif tool_name == "text":
+            tool = TextTool(color=color, thickness=thickness)
+        else:
+            tool = None
+
+        # Set tool in manager
+        self.drawing_manager.set_tool(tool)
+
+        logger.debug(f"Selected tool: {tool_name}")
+
+    def _on_drawing_color_changed(self, color: tuple):
+        """Handle color change.
+
+        Args:
+            color: RGB color tuple
+        """
+        self.drawing_manager.set_color(color)
+
+    def _on_drawing_thickness_changed(self, thickness: int):
+        """Handle thickness change.
+
+        Args:
+            thickness: Thickness in pixels
+        """
+        self.drawing_manager.set_thickness(thickness)
+
+    def _on_drawing_undo(self):
+        """Handle undo request."""
+        if self.drawing_manager.undo():
+            self.video_player.refresh()
+            self.status_bar.showMessage("Undo", 1000)
+
+    def _on_drawing_redo(self):
+        """Handle redo request."""
+        if self.drawing_manager.redo():
+            self.video_player.refresh()
+            self.status_bar.showMessage("Redo", 1000)
+
+    def _on_drawing_clear(self):
+        """Handle clear frame request."""
+        current_frame = self.video_player.get_current_frame()
+
+        reply = QMessageBox.question(
+            self,
+            "Clear Drawings",
+            f"Clear all drawings on frame {current_frame}?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if reply == QMessageBox.Yes:
+            self.drawing_manager.clear_frame(current_frame)
+            self.video_player.refresh()
+            self.status_bar.showMessage("Drawings cleared", 2000)
+
+    def _save_drawings(self):
+        """Save drawings to file."""
+        if not self.drawing_manager:
+            return
+
+        # Get default filename
+        if self.current_video_path:
+            from ..drawing import DrawingStorage
+            default_name = DrawingStorage.get_default_filename(self.current_video_path)
+        else:
+            default_name = "drawings.json"
+
+        filepath, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Drawings",
+            default_name,
+            "Drawing Files (*.drawings.json);;All Files (*)"
+        )
+
+        if filepath:
+            try:
+                from ..drawing import DrawingStorage
+
+                shapes = self.drawing_manager.get_all_shapes()
+                DrawingStorage.save_drawings(
+                    shapes,
+                    filepath,
+                    video_path=self.current_video_path
+                )
+
+                self.status_bar.showMessage(f"Saved {len(shapes)} drawings", 3000)
+                logger.info(f"Saved drawings to {filepath}")
+
+            except Exception as e:
+                logger.error(f"Failed to save drawings: {e}", exc_info=True)
+                QMessageBox.critical(
+                    self,
+                    "Save Error",
+                    f"Failed to save drawings:\n{str(e)}"
+                )
+
+    def _load_drawings(self):
+        """Load drawings from file."""
+        if not self.drawing_manager:
+            return
+
+        filepath, _ = QFileDialog.getOpenFileName(
+            self,
+            "Load Drawings",
+            "",
+            "Drawing Files (*.drawings.json);;All Files (*)"
+        )
+
+        if filepath:
+            try:
+                from ..drawing import DrawingStorage
+
+                shapes, video_path = DrawingStorage.load_drawings(filepath)
+
+                # Add all shapes to manager
+                for shape in shapes:
+                    self.drawing_manager.add_shape(shape)
+
+                self.video_player.refresh()
+                self.status_bar.showMessage(f"Loaded {len(shapes)} drawings", 3000)
+                logger.info(f"Loaded drawings from {filepath}")
+
+            except Exception as e:
+                logger.error(f"Failed to load drawings: {e}", exc_info=True)
+                QMessageBox.critical(
+                    self,
+                    "Load Error",
+                    f"Failed to load drawings:\n{str(e)}"
+                )
 
     def _show_about(self):
         """Show about dialog."""

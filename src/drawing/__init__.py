@@ -52,6 +52,8 @@ from .tools import (
 from .renderer import DrawingRenderer
 from .manager import DrawingManager
 from .storage import DrawingStorage
+from .canvas import DrawingCanvas
+from .toolbar import DrawingToolbar
 
 __all__ = [
     # Point
@@ -76,4 +78,8 @@ __all__ = [
     'DrawingRenderer',
     'DrawingManager',
     'DrawingStorage',
+
+    # GUI Widgets
+    'DrawingCanvas',
+    'DrawingToolbar',
 ]
