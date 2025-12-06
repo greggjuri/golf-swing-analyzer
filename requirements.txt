@@ -1,0 +1,21 @@
+# Core dependencies
+opencv-python>=4.8.0
+numpy>=1.24.0
+# mediapipe>=0.10.0  # Not yet available for Python 3.13, will be added later
+
+# GUI
+PyQt5>=5.15.0
+
+# Image processing
+Pillow>=10.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Linting and type checking
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Optional for motion smoothing
+scipy>=1.11.0
