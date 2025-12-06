@@ -63,8 +63,16 @@
   - Complete skeleton connection definitions
   - 85 tests with 94% module coverage
   - Ready for real MediaPipe when Python 3.13 supported
+- [x] Swing plane analysis
+  - Plane3D geometry with SVD-based plane fitting
+  - PlaneCalculator for fitting planes to shaft positions with impact zone weighting
+  - PlaneDetector for detecting address, backswing, downswing, and full swing planes
+  - PlaneMetrics for attack angle, swing path, on-plane deviation, plane angle
+  - SwingPlaneAnalyzer high-level interface for complete analysis
+  - 111 tests with 88-100% module coverage
+  - Demo script with 6 comprehensive scenarios
 - [x] Comprehensive test suite
-  - 399 tests total with 95% coverage
+  - 510 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)
 - [x] Project documentation
   - README.md with usage examples
