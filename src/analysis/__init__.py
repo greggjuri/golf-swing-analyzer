@@ -1,6 +1,9 @@
 """Analysis utilities for golf swing measurements."""
 
 from .angles import (
+    Point2D,
+    Vector2D,
+    Angle,
     angle_between_points,
     angle_between_vectors,
     angle_from_horizontal,
@@ -18,6 +21,10 @@ from .joint_angles import JointAngleCalculator, BodyLandmark
 from .club_angles import ClubAngleCalculator
 
 __all__ = [
+    # Types
+    'Point2D',
+    'Vector2D',
+    'Angle',
     # Core angles
     'angle_between_points',
     'angle_between_vectors',

@@ -5,8 +5,6 @@
 
 ## Backlog
 - [ ] Pose detection integration (MediaPipe)
-- [ ] Club tracking (edge detection + Hough transform)
-- [ ] Basic angle calculation utilities
 - [ ] Swing plane line drawing
 - [ ] GUI main window layout (PyQt5)
 - [ ] Video player widget
@@ -27,8 +25,21 @@
 - [x] Key position detection
   - KeyPositionDetector class
   - Motion-based analysis to find P1, P4, P7 positions
+- [x] Basic angle calculation utilities
+  - Core angle functions (12 functions for angles, geometry)
+  - JointAngleCalculator for body landmark analysis
+  - ClubAngleCalculator for club shaft measurements
+  - 74 tests with 98% coverage
+  - Demo script with usage examples
+- [x] Club tracking system
+  - ClubDetector using Canny edge detection + Hough line transform
+  - FramePreprocessor with ROI and contrast enhancement
+  - ClubTracker for multi-frame smoothing and gap interpolation
+  - Shaft and club head detection
+  - 51 tests with 94-98% module coverage
+  - Demo script with synthetic and real video examples
 - [x] Comprehensive test suite
-  - 41 tests with 98% coverage
+  - 166 tests total with 97% coverage
   - All linting checks pass (flake8, mypy)
 - [x] Project documentation
   - README.md with usage examples
