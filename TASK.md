@@ -9,7 +9,6 @@
 - [ ] GUI main window layout (PyQt5)
 - [ ] Video player widget
 - [ ] Manual line drawing tools
-- [ ] Visualization overlays (lines, angles, annotations)
 - [ ] Export annotated frames and videos
 
 ## Completed
@@ -38,8 +37,17 @@
   - Shaft and club head detection
   - 51 tests with 94-98% module coverage
   - Demo script with synthetic and real video examples
+- [x] Visualization overlays
+  - VisualizationEngine coordinating multiple renderers
+  - ClubRenderer for shaft and club head overlays
+  - BodyRenderer for skeleton and joint angles
+  - AngleRenderer for angle arcs and measurements
+  - Multiple color schemes (default, high-contrast, colorblind-friendly, minimal)
+  - Text annotations with background boxes
+  - 35 tests with 86-100% module coverage
+  - Comprehensive demo with 6 scenarios
 - [x] Comprehensive test suite
-  - 166 tests total with 97% coverage
+  - 201 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)
 - [x] Project documentation
   - README.md with usage examples
