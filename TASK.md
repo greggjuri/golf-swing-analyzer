@@ -4,10 +4,9 @@
 (none)
 
 ## Backlog
-- [ ] Swing plane line drawing
-- [ ] GUI main window layout (PyQt5)
-- [ ] Video player widget
 - [ ] Manual line drawing tools
+- [ ] Batch video processing
+- [ ] Side-by-side comparison view
 
 ## Completed
 - [x] Initial project setup and structure
@@ -71,6 +70,15 @@
   - SwingPlaneAnalyzer high-level interface for complete analysis
   - 111 tests with 88-100% module coverage
   - Demo script with 6 comprehensive scenarios
+- [x] F1-styled GUI main window
+  - F1Theme with glass morphism, black/white/silver color scheme, metallic accents
+  - MainWindow with menu bar, toolbar, status bar, and 3-panel layout
+  - VideoPlayerWidget with professional playback controls (play/pause/stop/seek/speed)
+  - AnalysisPanelWidget with large metric displays and overlay toggles
+  - TimelineWidget with scrubber and key position markers
+  - GlassPanel, MetricDisplay, ToggleButton custom widgets with F1 styling
+  - Comprehensive Qt stylesheets for premium aesthetic
+  - Demo application showcasing F1 design
 - [x] Comprehensive test suite
   - 510 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)
