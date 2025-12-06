@@ -79,6 +79,17 @@
   - GlassPanel, MetricDisplay, ToggleButton custom widgets with F1 styling
   - Comprehensive Qt stylesheets for premium aesthetic
   - Demo application showcasing F1 design
+- [x] GUI analysis integration
+  - Integrated club detection, pose detection, and swing plane analysis into GUI
+  - Real-time overlay rendering (club track, skeleton, angles, swing plane, key positions)
+  - Metrics display with attack angle, swing path, plane angle, and club speed
+  - Current frame analysis (Analyze Current Frame menu action)
+  - Full video analysis with progress tracking (Analyze Full Video)
+  - Key position detection with timeline markers
+  - Frame export with overlays (Export Frame to PNG/JPEG)
+  - Video export with overlays and progress tracking (Export Video to AVI/MP4)
+  - Temporal smoothing for club and pose tracking
+  - Dynamic overlay toggling with instant refresh
 - [x] Comprehensive test suite
   - 510 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)

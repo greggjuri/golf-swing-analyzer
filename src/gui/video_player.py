@@ -364,3 +364,7 @@ class VideoPlayerWidget(QWidget):
             Current frame number
         """
         return self.current_frame
+
+    def refresh(self):
+        """Refresh current frame display (e.g., after overlay toggle)."""
+        self._update_display()
