@@ -79,7 +79,9 @@ class ComparisonToolbar(QWidget):
 
         # Offset display
         self.offset_label = QLabel("Aligned")
-        self.offset_label.setStyleSheet("color: #C0C0C0; font-size: 11px;")
+        self.offset_label.setStyleSheet(
+            "color: #C0C0C0; font-size: 11px; background-color: #1A1A1A;"
+        )
         layout.addWidget(self.offset_label)
 
         # Calibrate button

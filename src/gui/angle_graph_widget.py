@@ -103,7 +103,7 @@ class AngleGraphWidget(QWidget):
 
         # Angle selector
         angle_label = QLabel("Angle:")
-        angle_label.setStyleSheet("color: #C0C0C0; font-weight: 600;")
+        angle_label.setStyleSheet("color: #C0C0C0; font-weight: 600; background-color: #1A1A1A;")
         controls_layout.addWidget(angle_label)
 
         self.angle_selector = QComboBox()
@@ -137,6 +137,7 @@ class AngleGraphWidget(QWidget):
             color: #A0A0A0;
             font-size: 10px;
             padding: 5px;
+            background-color: #1A1A1A;
         """)
         layout.addWidget(self.frame_info_label)
 

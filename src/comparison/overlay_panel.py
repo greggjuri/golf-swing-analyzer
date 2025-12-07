@@ -79,9 +79,9 @@ class OverlayPanel(QWidget):
         # Labels
         labels_layout = QHBoxLayout()
         left_label = QLabel("Left Video")
-        left_label.setStyleSheet("font-size: 10px; color: #C0C0C0;")
+        left_label.setStyleSheet("font-size: 10px; color: #C0C0C0; background-color: #1A1A1A;")
         right_label = QLabel("Right Video")
-        right_label.setStyleSheet("font-size: 10px; color: #C0C0C0;")
+        right_label.setStyleSheet("font-size: 10px; color: #C0C0C0; background-color: #1A1A1A;")
         right_label.setAlignment(Qt.AlignRight)
 
         labels_layout.addWidget(left_label)

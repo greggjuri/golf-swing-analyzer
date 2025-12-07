@@ -58,6 +58,7 @@ class AnalysisPanelWidget(QWidget):
 
         # Content widget
         content = QWidget()
+        content.setStyleSheet(f"QWidget {{ background-color: {F1Theme.BLACK_PANEL}; }}")
         content_layout = QVBoxLayout()
         content_layout.setSpacing(F1Theme.PADDING_LARGE)
         content_layout.setContentsMargins(
@@ -90,6 +91,13 @@ class AnalysisPanelWidget(QWidget):
         # Set fixed width for panel
         self.setMinimumWidth(300)
         self.setMaximumWidth(400)
+
+        # Apply F1 styling with dark background
+        self.setStyleSheet(f"""
+            AnalysisPanelWidget {{
+                background-color: {F1Theme.BLACK_PANEL};
+            }}
+        """)
 
     def _create_metrics_section(self) -> QWidget:
         """Create metrics display section.

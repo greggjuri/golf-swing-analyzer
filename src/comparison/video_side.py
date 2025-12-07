@@ -42,6 +42,7 @@ class CompactOverlayPanel(QWidget):
             font-weight: 600;
             color: #C0C0C0;
             letter-spacing: 1px;
+            background-color: #1A1A1A;
         """)
         layout.addWidget(title)
 
@@ -64,6 +65,9 @@ class CompactOverlayPanel(QWidget):
 
         layout.addStretch()
         self.setLayout(layout)
+
+        # Set dark background
+        self.setStyleSheet("CompactOverlayPanel { background-color: #1A1A1A; }")
 
     def get_enabled_overlays(self) -> dict:
         """Get enabled overlays.
@@ -143,6 +147,7 @@ class VideoSide(QWidget):
             font-weight: 600;
             color: #E8E8E8;
             padding: 5px;
+            background-color: #1A1A1A;
         """)
         title_layout.addWidget(title)
 
@@ -152,6 +157,7 @@ class VideoSide(QWidget):
             font-size: 10px;
             color: #C0C0C0;
             padding: 5px;
+            background-color: #1A1A1A;
         """)
         title_layout.addStretch()
         title_layout.addWidget(self.frame_label)
