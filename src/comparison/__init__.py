@@ -22,10 +22,14 @@ from .sync_controller import SyncController
 from .comparison_toolbar import ComparisonToolbar
 from .video_side import VideoSide
 from .comparison_view import ComparisonView
+from .overlay_renderer import OverlayRenderer
+from .overlay_panel import OverlayPanel
 
 __all__ = [
     'SyncController',
     'ComparisonToolbar',
     'VideoSide',
     'ComparisonView',
+    'OverlayRenderer',
+    'OverlayPanel',
 ]

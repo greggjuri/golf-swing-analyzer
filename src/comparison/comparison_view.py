@@ -3,14 +3,17 @@
 import logging
 
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QSplitter, QFileDialog, QMessageBox
+    QWidget, QVBoxLayout, QSplitter, QFileDialog, QMessageBox, QLabel
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
 from ..gui.timeline import TimelineWidget
+from ..gui.video_player import VideoDisplayLabel
 from .video_side import VideoSide
 from .sync_controller import SyncController
 from .comparison_toolbar import ComparisonToolbar
+from .overlay_renderer import OverlayRenderer
+from .overlay_panel import OverlayPanel
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +49,14 @@ class ComparisonView(QWidget):
         # Shared timeline for synchronized playback
         self.shared_timeline = TimelineWidget()
 
+        # Overlay mode components
+        self.overlay_renderer = OverlayRenderer()
+        self.overlay_panel = OverlayPanel()
+        self.overlay_display = VideoDisplayLabel()
+
+        # View mode state
+        self.view_mode = 'side-by-side'  # 'side-by-side' or 'overlay'
+
         # Playback state
         self.is_playing = False
         self.playback_timer = QTimer()
@@ -58,6 +69,8 @@ class ComparisonView(QWidget):
 
     def _setup_ui(self):
         """Set up comparison layout."""
+        from PyQt5.QtWidgets import QHBoxLayout, QRadioButton, QButtonGroup
+
         main_layout = QVBoxLayout()
         main_layout.setSpacing(5)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -65,15 +78,37 @@ class ComparisonView(QWidget):
         # Comparison toolbar at top
         main_layout.addWidget(self.comparison_toolbar)
 
-        # Horizontal splitter for two videos
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(self.left_side)
-        splitter.addWidget(self.right_side)
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 1)
+        # View mode toggle
+        mode_layout = QHBoxLayout()
+        mode_layout.setContentsMargins(10, 5, 10, 5)
+
+        mode_label = QLabel("View Mode:")
+        mode_label.setStyleSheet("color: #C0C0C0; font-weight: 600;")
+        mode_layout.addWidget(mode_label)
+
+        self.view_mode_group = QButtonGroup(self)
+        self.side_by_side_radio = QRadioButton("Side-by-Side")
+        self.overlay_radio = QRadioButton("Overlay")
+        self.side_by_side_radio.setChecked(True)
+
+        self.view_mode_group.addButton(self.side_by_side_radio, 0)
+        self.view_mode_group.addButton(self.overlay_radio, 1)
+
+        mode_layout.addWidget(self.side_by_side_radio)
+        mode_layout.addWidget(self.overlay_radio)
+        mode_layout.addStretch()
+
+        main_layout.addLayout(mode_layout)
+
+        # Horizontal splitter for two videos (side-by-side mode)
+        self.splitter = QSplitter(Qt.Horizontal)
+        self.splitter.addWidget(self.left_side)
+        self.splitter.addWidget(self.right_side)
+        self.splitter.setStretchFactor(0, 1)
+        self.splitter.setStretchFactor(1, 1)
 
         # Style the splitter handle
-        splitter.setStyleSheet("""
+        self.splitter.setStyleSheet("""
             QSplitter::handle {
                 background-color: #C0C0C0;
                 width: 2px;
@@ -83,7 +118,27 @@ class ComparisonView(QWidget):
             }
         """)
 
-        main_layout.addWidget(splitter, stretch=1)
+        main_layout.addWidget(self.splitter, stretch=1)
+
+        # Overlay mode container (hidden by default)
+        overlay_container = QWidget()
+        overlay_layout = QHBoxLayout()
+        overlay_layout.setSpacing(5)
+        overlay_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Overlay display (center)
+        self.overlay_display.setMinimumSize(600, 400)
+        overlay_layout.addWidget(self.overlay_display, stretch=1)
+
+        # Overlay controls (right side)
+        self.overlay_panel.setMaximumWidth(250)
+        overlay_layout.addWidget(self.overlay_panel)
+
+        overlay_container.setLayout(overlay_layout)
+        self.overlay_container = overlay_container
+        self.overlay_container.setVisible(False)  # Hidden by default
+
+        main_layout.addWidget(self.overlay_container, stretch=1)
 
         # Shared timeline at bottom
         main_layout.addWidget(self.shared_timeline)
@@ -110,6 +165,85 @@ class ComparisonView(QWidget):
 
         # Timeline signals
         self.shared_timeline.frame_selected.connect(self.seek_to_frame)
+
+        # View mode signals
+        self.view_mode_group.buttonClicked.connect(self._on_view_mode_changed)
+
+        # Overlay panel signals
+        self.overlay_panel.alpha_changed.connect(self._on_overlay_settings_changed)
+        self.overlay_panel.blend_mode_changed.connect(self._on_overlay_settings_changed)
+        self.overlay_panel.left_tint_toggled.connect(self._on_overlay_settings_changed)
+        self.overlay_panel.right_tint_toggled.connect(self._on_overlay_settings_changed)
+
+    def _on_view_mode_changed(self):
+        """Handle view mode toggle between side-by-side and overlay."""
+        if self.side_by_side_radio.isChecked():
+            self.view_mode = 'side-by-side'
+            self.splitter.setVisible(True)
+            self.overlay_container.setVisible(False)
+            logger.info("Switched to side-by-side mode")
+        else:
+            self.view_mode = 'overlay'
+            self.splitter.setVisible(False)
+            self.overlay_container.setVisible(True)
+            self._update_overlay_display()
+            logger.info("Switched to overlay mode")
+
+    def _on_overlay_settings_changed(self, *args):
+        """Handle overlay settings change (alpha, blend mode, tints).
+
+        Args:
+            *args: Variable arguments from different signals (ignored)
+        """
+        if self.view_mode == 'overlay':
+            self._update_overlay_display()
+
+    def _update_overlay_display(self):
+        """Update overlay display with current frame blended."""
+        if not (self.left_side.is_video_loaded() and
+                self.right_side.is_video_loaded()):
+            return
+
+        # Get current frame from both sides
+        frame_num = self.left_side.get_current_frame()
+
+        left_frame = self.left_side.get_frame(frame_num)
+        if self.sync_controller.is_sync_enabled():
+            right_frame_num = self.sync_controller.get_synced_frame(
+                frame_num,
+                max_frame=self.right_side.get_total_frames() - 1
+            )
+        else:
+            right_frame_num = self.right_side.get_current_frame()
+
+        right_frame = self.right_side.get_frame(right_frame_num)
+
+        if left_frame is None or right_frame is None:
+            return
+
+        # Get overlay settings
+        alpha = self.overlay_panel.get_alpha()
+        blend_mode = self.overlay_panel.get_blend_mode()
+
+        # Get tint settings
+        tint1 = (255, 100, 100) if self.overlay_panel.is_left_tint_enabled() else None
+        tint2 = (100, 255, 100) if self.overlay_panel.is_right_tint_enabled() else None
+
+        # Render blended frame
+        try:
+            blended = self.overlay_renderer.render(
+                left_frame, right_frame,
+                alpha=alpha,
+                blend_mode=blend_mode,
+                tint1=tint1,
+                tint2=tint2
+            )
+
+            # Display blended frame
+            self.overlay_display.set_frame(blended)
+
+        except Exception as e:
+            logger.error(f"Error rendering overlay: {e}", exc_info=True)
 
     def load_left_video_dialog(self):
         """Open file dialog to load left video."""
@@ -291,6 +425,10 @@ class ComparisonView(QWidget):
             )
             self.right_side.seek(right_frame)
 
+        # Update overlay display if in overlay mode
+        if self.view_mode == 'overlay':
+            self._update_overlay_display()
+
     def seek_to_frame(self, frame_number: int):
         """Seek both videos to frame (if synced).
 
@@ -308,6 +446,10 @@ class ComparisonView(QWidget):
                 max_frame=self.right_side.get_total_frames() - 1
             )
             self.right_side.seek(right_frame)
+
+        # Update overlay display if in overlay mode
+        if self.view_mode == 'overlay':
+            self._update_overlay_display()
 
     def calibrate_sync(self):
         """Calibrate sync from current positions."""

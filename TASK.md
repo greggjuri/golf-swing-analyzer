@@ -5,7 +5,10 @@
 
 ## Backlog
 - [ ] Batch video processing
-- [ ] Video overlay mode (alpha blending two videos)
+- [ ] Swing analysis reports (PDF/HTML export with metrics)
+- [ ] Angle tracking graphs (plot angle changes over time)
+- [ ] Club face analysis (open/closed detection)
+- [ ] Swing tempo analysis (backswing/downswing ratio)
 
 ## Completed
 - [x] Initial project setup and structure
@@ -115,6 +118,18 @@
   - Link/unlink playback with visual indicator
   - Frame offset display and calibration from user-selected matching frames
   - F1-styled toolbar and UI components
+- [x] Video overlay mode (alpha blending)
+  - OverlayRenderer with 4 blend modes (normal, difference, multiply, screen)
+  - OverlayPanel with F1-styled controls for transparency, blend mode, and color tints
+  - View mode toggle (side-by-side / overlay) with radio buttons
+  - Alpha transparency slider (0-100%)
+  - Color tinting system (red for left, green for right video)
+  - Automatic frame alignment (center, top-left, scale-to-fit modes)
+  - Real-time overlay rendering during playback
+  - Integration with ComparisonView synchronized playback
+  - Blend mode options: Normal (alpha blend), Difference (highlight changes),
+    Multiply (darker blend), Screen (lighter blend)
+  - F1-styled overlay control panel with help text
 - [x] Comprehensive test suite
   - 510 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)
