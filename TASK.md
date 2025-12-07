@@ -5,7 +5,7 @@
 
 ## Backlog
 - [ ] Batch video processing
-- [ ] Side-by-side comparison view
+- [ ] Video overlay mode (alpha blending two videos)
 
 ## Completed
 - [x] Initial project setup and structure
@@ -102,6 +102,19 @@
   - Drawings render on exported frames and videos
   - Shape selection and deletion support
   - Per-frame drawing storage
+- [x] Side-by-side comparison view
+  - SyncController for frame synchronization with offset calibration
+  - ComparisonToolbar with load, swap, link playback, calibrate sync, screenshot controls
+  - VideoSide widget with independent video player, playback controls, and overlay panels
+  - ComparisonView main widget with synchronized dual playback and shared timeline
+  - CompactOverlayPanel with toggles for club track, skeleton, angles, and plane overlays
+  - Independent analysis per side (viz_engine, drawing_manager, drawing_renderer)
+  - MainWindow integration with Ctrl+M toggle between single and comparison views
+  - Screenshot function for side-by-side frame capture
+  - Swap functionality to exchange left/right videos
+  - Link/unlink playback with visual indicator
+  - Frame offset display and calibration from user-selected matching frames
+  - F1-styled toolbar and UI components
 - [x] Comprehensive test suite
   - 510 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)

@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
         self.current_video_path = None
         self.video_loader = None
         self.frame_extractor = None
+        self.comparison_mode = False  # Track comparison mode state
 
         # Analysis components (will be initialized when needed)
         self.club_detector = None
@@ -122,6 +123,17 @@ class MainWindow(QMainWindow):
 
         # === VIEW MENU ===
         view_menu = menubar.addMenu("&View")
+
+        # Toggle Comparison Mode
+        self.comparison_mode_action = QAction("&Comparison Mode", self)
+        self.comparison_mode_action.setCheckable(True)
+        self.comparison_mode_action.setChecked(False)
+        self.comparison_mode_action.setShortcut(QKeySequence("Ctrl+M"))
+        self.comparison_mode_action.setStatusTip("Toggle comparison view (Ctrl+M)")
+        self.comparison_mode_action.triggered.connect(self._toggle_comparison_mode)
+        view_menu.addAction(self.comparison_mode_action)
+
+        view_menu.addSeparator()
 
         # Toggle Analysis Panel
         toggle_panel_action = QAction("Analysis &Panel", self)
@@ -220,7 +232,7 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create horizontal splitter for main content
-        splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter = QSplitter(Qt.Horizontal)
 
         # === VIDEO PLAYER (Left) ===
         self.video_player = VideoPlayerWidget()
@@ -228,19 +240,26 @@ class MainWindow(QMainWindow):
         # === ANALYSIS PANEL (Right) ===
         self.analysis_panel = AnalysisPanelWidget()
 
-        # Add to splitter
-        splitter.addWidget(self.video_player)
-        splitter.addWidget(self.analysis_panel)
+        # === COMPARISON VIEW (Alternative to video player + panel) ===
+        # Import here to avoid circular dependency
+        from ..comparison import ComparisonView
+        self.comparison_view = ComparisonView()
+        self.comparison_view.setVisible(False)  # Hidden by default
+
+        # Add to splitter (single view by default)
+        self.main_splitter.addWidget(self.video_player)
+        self.main_splitter.addWidget(self.analysis_panel)
 
         # Set initial sizes (80% video, 20% panel)
-        splitter.setStretchFactor(0, 4)
-        splitter.setStretchFactor(1, 1)
+        self.main_splitter.setStretchFactor(0, 4)
+        self.main_splitter.setStretchFactor(1, 1)
 
         # === TIMELINE (Bottom) ===
         self.timeline = TimelineWidget()
 
         # Add to main layout
-        main_layout.addWidget(splitter, stretch=1)
+        main_layout.addWidget(self.main_splitter, stretch=1)
+        main_layout.addWidget(self.comparison_view, stretch=1)
         main_layout.addWidget(self.timeline)
 
         central_widget.setLayout(main_layout)
@@ -623,6 +642,29 @@ class MainWindow(QMainWindow):
         # Refresh current frame to apply/remove overlay
         if self.video_player:
             self.video_player.refresh()
+
+    def _toggle_comparison_mode(self, checked: bool):
+        """Toggle between single and comparison view modes.
+
+        Args:
+            checked: True for comparison mode, False for single view
+        """
+        self.comparison_mode = checked
+
+        if checked:
+            # Switch to comparison mode
+            self.main_splitter.setVisible(False)
+            self.comparison_view.setVisible(True)
+            self.timeline.setVisible(False)  # Comparison view has its own timeline
+            self.status_bar.showMessage("Comparison mode enabled", 2000)
+            logger.info("Switched to comparison mode")
+        else:
+            # Switch to single view mode
+            self.comparison_view.setVisible(False)
+            self.main_splitter.setVisible(True)
+            self.timeline.setVisible(True)
+            self.status_bar.showMessage("Single view mode", 2000)
+            logger.info("Switched to single view mode")
 
     def _toggle_analysis_panel(self, checked: bool):
         """Toggle analysis panel visibility.
