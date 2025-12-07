@@ -280,6 +280,11 @@ class MainWindow(QMainWindow):
         # Add to main layout
         main_layout.addWidget(self.main_splitter, stretch=1)
         main_layout.addWidget(self.comparison_view, stretch=1)
+
+        # Drawing toolbar placeholder (will be shown when drawing mode enabled)
+        # Note: drawing_toolbar is created later in _create_drawing_components
+        # We'll insert it dynamically when that method runs
+
         main_layout.addWidget(self.timeline)
 
         # Angle graphs will be added here if created
@@ -312,8 +317,11 @@ class MainWindow(QMainWindow):
         self.drawing_toolbar = DrawingToolbar()
         self.drawing_toolbar.setVisible(False)
 
-        # Add toolbar to main window (below main toolbar)
-        self.addToolBar(Qt.TopToolBarArea, self.drawing_toolbar)
+        # Insert drawing toolbar into main layout (between comparison_view and timeline)
+        # Find timeline widget index and insert before it
+        timeline_index = self.main_layout.indexOf(self.timeline)
+        if timeline_index >= 0:
+            self.main_layout.insertWidget(timeline_index, self.drawing_toolbar)
 
         # Create drawing canvas (overlays on video player)
         # Will be positioned in video player widget
