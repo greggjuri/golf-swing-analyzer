@@ -221,23 +221,9 @@ class MainWindow(QMainWindow):
 
     def _create_tool_bar(self):
         """Create tool bar with common actions."""
-        toolbar = self.addToolBar("Main Toolbar")
-        toolbar.setMovable(False)
-
-        # Open Video
-        open_action = QAction("Open", self)
-        open_action.setStatusTip("Open video file")
-        open_action.triggered.connect(self.open_video)
-        toolbar.addAction(open_action)
-
-        toolbar.addSeparator()
-
-        # Playback controls are in the video player widget
-        # Just add export here
-        export_action = QAction("Export", self)
-        export_action.setStatusTip("Export video")
-        export_action.triggered.connect(self.export_video)
-        toolbar.addAction(export_action)
+        # Toolbar removed - all actions available in menu bar
+        # (Open and Export are in File menu)
+        pass
 
     def _create_central_widget(self):
         """Create central layout with video player and panels."""
