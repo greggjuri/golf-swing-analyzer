@@ -19,6 +19,7 @@ from .angles import (
 )
 from .joint_angles import JointAngleCalculator, BodyLandmark
 from .club_angles import ClubAngleCalculator
+from .angle_tracker import AngleTracker, extract_angles_from_pose, extract_club_angles
 
 __all__ = [
     # Types
@@ -43,4 +44,8 @@ __all__ = [
     'JointAngleCalculator',
     'ClubAngleCalculator',
     'BodyLandmark',
+    # Tracking
+    'AngleTracker',
+    'extract_angles_from_pose',
+    'extract_club_angles',
 ]

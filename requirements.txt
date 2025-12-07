@@ -6,6 +6,9 @@ numpy>=1.24.0
 # GUI
 PyQt5>=5.15.0
 
+# Graphing and visualization
+matplotlib>=3.7.0
+
 # Image processing
 Pillow>=10.0.0
 

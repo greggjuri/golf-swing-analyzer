@@ -72,12 +72,18 @@ class MainWindow(QMainWindow):
         self.drawing_toolbar = None
         self.drawing_enabled = False
 
+        # Angle tracking components
+        self.angle_tracker = None
+        self.angle_graph_widget = None
+        self.show_angle_graphs = False
+
         # Create UI components
         self._create_menu_bar()
         self._create_tool_bar()
         self._create_central_widget()
         self._create_status_bar()
         self._create_drawing_components()
+        self._create_angle_tracking_components()
 
         # Connect signals
         self._connect_signals()
@@ -142,6 +148,15 @@ class MainWindow(QMainWindow):
         toggle_panel_action.setStatusTip("Show/hide analysis panel")
         toggle_panel_action.triggered.connect(self._toggle_analysis_panel)
         view_menu.addAction(toggle_panel_action)
+
+        # Toggle Angle Graphs
+        self.toggle_graphs_action = QAction("Angle &Graphs", self)
+        self.toggle_graphs_action.setCheckable(True)
+        self.toggle_graphs_action.setChecked(False)
+        self.toggle_graphs_action.setShortcut(QKeySequence("Ctrl+G"))
+        self.toggle_graphs_action.setStatusTip("Show/hide angle graphs (Ctrl+G)")
+        self.toggle_graphs_action.triggered.connect(self._toggle_angle_graphs)
+        view_menu.addAction(self.toggle_graphs_action)
 
         # === ANALYSIS MENU ===
         analysis_menu = menubar.addMenu("&Analysis")
@@ -257,12 +272,20 @@ class MainWindow(QMainWindow):
         # === TIMELINE (Bottom) ===
         self.timeline = TimelineWidget()
 
+        # === ANGLE GRAPHS (Below timeline, hidden by default) ===
+        # Will be created in _create_angle_tracking_components()
+        # Placeholder for now
+        self.angle_graph_container = None
+
         # Add to main layout
         main_layout.addWidget(self.main_splitter, stretch=1)
         main_layout.addWidget(self.comparison_view, stretch=1)
         main_layout.addWidget(self.timeline)
 
+        # Angle graphs will be added here if created
+
         central_widget.setLayout(main_layout)
+        self.main_layout = main_layout  # Store reference for adding graph later
         self.setCentralWidget(central_widget)
 
     def _create_status_bar(self):
@@ -296,6 +319,30 @@ class MainWindow(QMainWindow):
         # Will be positioned in video player widget
 
         logger.debug("Drawing components created")
+
+    def _create_angle_tracking_components(self):
+        """Create angle tracking components (tracker, graph widget)."""
+        from ..analysis import AngleTracker
+        from .angle_graph_widget import AngleGraphWidget
+
+        # Create angle tracker
+        self.angle_tracker = AngleTracker()
+
+        # Create graph widget (hidden by default)
+        self.angle_graph_widget = AngleGraphWidget()
+        self.angle_graph_widget.setVisible(False)
+        self.angle_graph_widget.setMinimumHeight(300)
+        self.angle_graph_widget.setMaximumHeight(400)
+
+        # Add to main layout (below timeline)
+        if hasattr(self, 'main_layout'):
+            self.main_layout.addWidget(self.angle_graph_widget)
+
+        # Connect signals
+        self.angle_graph_widget.frame_clicked.connect(self._on_graph_frame_clicked)
+        self.angle_graph_widget.angle_selected.connect(self._on_graph_angle_selected)
+
+        logger.debug("Angle tracking components created")
 
     def _connect_signals(self):
         """Connect widget signals to slots."""
@@ -544,6 +591,10 @@ class MainWindow(QMainWindow):
         # Update metrics for current frame
         self._update_metrics(frame_number)
 
+        # Update graph marker if graphs are visible
+        if self.show_angle_graphs and self.angle_graph_widget:
+            self.angle_graph_widget.update_current_frame_marker(frame_number)
+
     def _update_metrics(self, frame_number: int):
         """Update metrics display for current frame.
 
@@ -673,6 +724,82 @@ class MainWindow(QMainWindow):
             checked: Whether to show panel
         """
         self.analysis_panel.setVisible(checked)
+
+    def _toggle_angle_graphs(self, checked: bool):
+        """Toggle angle graphs visibility.
+
+        Args:
+            checked: Whether to show graphs
+        """
+        self.show_angle_graphs = checked
+
+        if self.angle_graph_widget:
+            self.angle_graph_widget.setVisible(checked)
+
+        if checked and self.angle_tracker:
+            # Populate angle options if we have data
+            available_angles = self.angle_tracker.get_available_angles()
+            if available_angles:
+                self.angle_graph_widget.set_angle_options(available_angles)
+                # Plot the first angle by default
+                self._plot_current_angle()
+
+        logger.info(f"Angle graphs {'shown' if checked else 'hidden'}")
+
+    def _on_graph_frame_clicked(self, frame_number: int):
+        """Handle click on graph to seek video.
+
+        Args:
+            frame_number: Frame to seek to
+        """
+        if self.video_player:
+            self.video_player.seek(frame_number)
+
+    def _on_graph_angle_selected(self, angle_name: str):
+        """Handle angle selection from graph dropdown.
+
+        Args:
+            angle_name: Name of angle to plot
+        """
+        self._plot_current_angle()
+
+    def _plot_current_angle(self):
+        """Plot currently selected angle on graph."""
+        if not self.angle_graph_widget or not self.angle_tracker:
+            return
+
+        # Get selected angle from dropdown
+        current_angle = self.angle_graph_widget.angle_selector.currentText()
+        if not current_angle:
+            return
+
+        # Map display name to internal name
+        if hasattr(self.angle_graph_widget, '_angle_name_map'):
+            angle_name = self.angle_graph_widget._angle_name_map.get(current_angle)
+        else:
+            # Fallback: convert display name back
+            angle_name = current_angle.lower().replace(' ', '_')
+
+        try:
+            # Get angle data
+            frames, values = self.angle_tracker.get_angle_series(angle_name)
+
+            if len(frames) > 0:
+                # Plot angle
+                self.angle_graph_widget.plot_angle(
+                    frames, values,
+                    angle_name=angle_name,
+                    color='#00FF00'
+                )
+
+                # Add key position markers if available
+                if self.key_positions:
+                    self.angle_graph_widget.set_key_positions(self.key_positions)
+
+                logger.debug(f"Plotted angle: {angle_name}")
+
+        except KeyError:
+            logger.warning(f"Angle '{angle_name}' not found in tracker")
 
     def _analyze_current_frame(self):
         """Run analysis on current frame."""
@@ -814,6 +941,32 @@ class MainWindow(QMainWindow):
             if self.plane_analyzer and club_positions:
                 self.status_bar.showMessage("Calculating swing plane...")
                 self.plane_results = self.plane_analyzer.analyze(club_positions)
+
+            # Extract angle data for tracking
+            if self.angle_tracker:
+                self.status_bar.showMessage("Extracting angle data...")
+                self.angle_tracker.clear()  # Clear previous data
+
+                from ..analysis import extract_angles_from_pose, extract_club_angles
+
+                # Extract angles from pose results
+                for frame_num, landmarks in self.pose_results.items():
+                    angles = extract_angles_from_pose(landmarks)
+                    if angles:
+                        self.angle_tracker.add_frame_data(frame_num, angles)
+
+                # Extract angles from club results
+                for frame_num, club_data in self.club_results.items():
+                    angles = extract_club_angles(club_data)
+                    if angles:
+                        self.angle_tracker.add_frame_data(frame_num, angles)
+
+                # Update graph widget options if graphs are visible
+                if self.show_angle_graphs and self.angle_graph_widget:
+                    available_angles = self.angle_tracker.get_available_angles()
+                    if available_angles:
+                        self.angle_graph_widget.set_angle_options(available_angles)
+                        self._plot_current_angle()
 
             # Refresh display
             self.video_player.refresh()

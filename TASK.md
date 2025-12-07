@@ -6,9 +6,9 @@
 ## Backlog
 - [ ] Batch video processing
 - [ ] Swing analysis reports (PDF/HTML export with metrics)
-- [ ] Angle tracking graphs (plot angle changes over time)
 - [ ] Club face analysis (open/closed detection)
 - [ ] Swing tempo analysis (backswing/downswing ratio)
+- [ ] Swing template library (pro swings for comparison)
 
 ## Completed
 - [x] Initial project setup and structure
@@ -130,6 +130,22 @@
   - Blend mode options: Normal (alpha blend), Difference (highlight changes),
     Multiply (darker blend), Screen (lighter blend)
   - F1-styled overlay control panel with help text
+- [x] Angle tracking graphs
+  - AngleTracker for collecting angle data across frames
+  - AngleGraphWidget with matplotlib integration and F1 styling
+  - Interactive graphs with click-to-seek functionality
+  - Support for multiple angle types (spine, elbows, knees, club shaft, shoulder rotation)
+  - Real-time graph updates during video playback
+  - Current frame marker (white vertical line)
+  - Key position markers (gold vertical lines at P1, P4, P7, etc.)
+  - Angle selector dropdown with formatted names
+  - Export graphs to PNG/SVG
+  - Comparison mode for dual angle plots
+  - Gap filling with linear interpolation
+  - Statistical summaries (min, max, mean, std)
+  - Toggle graphs with Ctrl+G keyboard shortcut
+  - Automatic angle extraction from pose and club analysis
+  - Integration with full video analysis workflow
 - [x] Comprehensive test suite
   - 510 tests total with 95% coverage
   - All linting checks pass (flake8, mypy)
